@@ -5,7 +5,7 @@
 
 		<!-- P5 libraries -->
 		<script src="https://cdn.jsdelivr.net/npm/p5@1.1.9/lib/p5.js"></script>
-
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.1.9/addons/p5.sound.js"></script>
 		<!-- A-Frame libraries -->
 		<script src="https://aframe.io/releases/1.0.4/aframe.min.js"></script>
 
@@ -41,8 +41,21 @@
 		       <img id="ITEM_ID_GOES_HERE" src="images/gold_block.png">
 			-->
 
-			<a-assets id="VRAssets">
-			</a-assets>
+				<a-assets id="VRAssets">
+					<img id="ground" src="assets/images/ground.jpg" />
+					<img src="assets/images/skybox.jpg" id="sky1"></a-assets>
+					<a-asset id="gun_obj" src="assets/pistol/gun.obj"></a-asset>
+					<a-asset id="gun_mtl" src="assets/pistol/gun.mtl"></a-asset>
+					<a-asset id="gun_obj" src="assets/pistol/gun.obj"></a-asset>
+					<a-asset id="gun_mtl" src="assets/pistol/gun.mtl"></a-asset>
+					<a-asset id="bullet_obj" src="assets/bullet/bullet.obj"></a-asset>
+					<a-asset id="bullet_mtl" src="assets/bullet/bullet.mtl"></a-asset>
+
+				</a-assets>
+
+				<a-sky id="theSky" src="#sky1" color="rgb(255,255,255)"></a-sky>
+
+		    </a-scene>
 
 	    </a-scene>
 
