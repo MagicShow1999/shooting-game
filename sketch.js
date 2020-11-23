@@ -59,44 +59,54 @@ function draw() {
 	gun.setPosition(world.camera.x,world.camera.y - 0.3,world.camera.z);
 	gun.rotateY(world.camera.rotationY + 180);
 	gun.rotateX(-world.camera.rotationX);
-	for(b of bullets){
-		/*var vectorHUD = new THREE.Vector3();
-		vectorHUD.setFromMatrixPosition(b.tag.object3D.matrixWorld);
-		var vectorCamera = b.getWorldPosition();
-		var xDiff = vectorHUD.x - vectorCamera.x;
-		var yDiff = vectorHUD.y - vectorCamera.y;
-		var zDiff = vectorHUD.z - vectorCamera.z;
-		if (b.flying) {
-			b.nudge(xDiff * 0.01, yDiff *  0.01, zDiff *  0.01);
-		} else {
-			b.nudge(xDiff *  0.01, 0, zDiff *  0.01);
-		}*/
-
-		b.nudge(0,0,0.1);//0.01*Math.sin(b.rotationY*PI/180),-0.01*Math.sin(b.rotationX*PI/180),0.01*Math.cos(b.rotationY*PI/180));
-		if(b.getZ() > 1){
-			//box.removeChild(b);
+	for(let i = 0; i < bullets.length; i++){
+		bullets[i].move();
+		const pos = bullets[i].bullet.getWorldPosition();
+		//makes these numbers much smaller
+		if (pos.x > 50 || pos.x < -50 || pos.z > 50 || pos.z < -50) {
+			world.remove(bullets[i].myContainer);
+			bullets.splice(i, 1);
+			i--;
+			continue;
 		}
 	}
 
 }
 
+class Bullet{
+	constructor() {
+		const boxPosition = box.getWorldPosition();
+		this.myContainer = new Container3D({
+			x: boxPosition.x,
+			y: boxPosition.y,
+			z: boxPosition.z,
+			rotationX: gun.getRotationX(),
+			rotationY: gun.getRotationY(),
+			rotationZ: gun.getRotationZ()
+		});
+		world.add(this.myContainer);
+		this.bullet = new OBJ({
+			asset: 'bullet_obj',
+			mtl: 'bullet_mtl',
+			x:0,
+			y:0,
+			z:0,
+			scaleX:0.01,
+			scaleY:0.01,
+			scaleZ:0.01,
+		});
+		this.myContainer.addChild(this.bullet);
+	}
+	move() {
+		this.bullet.nudge(0,0,0.02);
+	}
+}
+
+
 function mousePressed(){
 	pistolSound.play();
-	const b = new OBJ({
-		asset: 'bullet_obj',
-		mtl: 'bullet_mtl',
-		x: 0,
-		y: 0,
-		z: 0,
-		rotationX:gun.rotationX,
-		rotationY:0,
-		scaleX:0.1,
-		scaleY:0.1,
-		scaleZ:0.1,
-	});
-	bullets.push(b);
-	box.addChild(b);
-	//world.add(b);
+	const temp = new Bullet();
+	bullets.push( temp );
 }
 
 function createEnemies(){
