@@ -83,8 +83,9 @@ function setup() {
 			world.slideToObject( theBox, 2000 );
 		}
 	})
-	for(let i = 0; i < 10; i ++){
-		//createEnemies();
+	// spawn enemies
+	for(let i = 0; i < 1; i ++){
+		createEnemies();
 	}
 	//box.hide();
 	//world.add(box);
@@ -103,10 +104,12 @@ function draw() {
 	for(let i = 0; i < bullets.length; i++){
 		bullets[i].move();
 		const pos = bullets[i].bullet.getWorldPosition();
+		// console.log(pos);
 		for(let j = 0; j < enemies.length; j++){
 			const enemyPos = enemies[j].getWorldPosition();
-			if(dist(pos.x,pos.y,pos.z,enemyPos.x,enemyPos.y,enemyPos.z) < 1){
+			if(dist(pos,enemyPos) < 1){
 				world.remove(bullets[i].myContainer);
+
 				world.remove(enemies[j]);
 				bullets.splice(i, 1);
 				i--;
@@ -115,7 +118,9 @@ function draw() {
 				break;
 			}
 		}
-		if (pos.x > 50 || pos.x < -50 || pos.z > 50 || pos.z < -50) {
+		// get current position of the player
+		const playerPos = world.getUserPosition();
+		if (dist(pos, playerPos) < 3) {
 			world.remove(bullets[i].myContainer);
 			bullets.splice(i, 1);
 			i--;
@@ -123,7 +128,7 @@ function draw() {
 		}
 	}
 	for(let i = 0; i < enemies.length; i++){
-		enemies[i].nudge(0,0,0.01);
+		enemies[i].nudge(0,0,0.04);
 	}
 }
 
@@ -132,22 +137,32 @@ function draw() {
 function mousePressed(){
 	pistolSound.play();
 	const temp = new Bullet();
+	// don't know why but it seems that this function is run 3 times each time i click on mouse
+	console.log(temp);
 	bullets.push( temp );
+	console.log(bullets.length);
+}
+
+/* Get random values between min and max. Copied from mozilla */
+function getRandomArbitrary(min, max) {
+  return Math.random() * (max - min) + min;
+}
+/* Distance checker that returns the distance of two position objects */
+function getDistance(objPos, objTwoPos) {
+	return dist(objPos.x, objPos.y, objPos.z, objTwoPos.x, objTwoPos.y, objTwoPos.z);
 }
 
 function createEnemies(){
-	const index = Math.floor(Math.random() * types.length);
-	const shape = types[index];
-	let obj;
-	if(shape === Box || true){
-		obj = new types[index]({
-			x:Math.random() * (80 - -80 + 1) + -80, y:1, z:Math.random() * - 80 + 20,
-			width:1, height: 1.2, depth: 2,
-			red:random(255), green:random(255), blue:random(255)
-		});
-		world.add(obj);
-		enemies.push(obj);
-	}
+	const number = -80;
+	// currently i just choose Box as default placeholder for enemy object
+	const obj = new Box({
+		x:0, y:1, z:2,
+		width:1, height: 1, depth: 1,
+		red:random(255), green:random(255), blue:random(255)
+	});
+	world.add(obj);
+	enemies.push(obj);
+	
 }
 
 
@@ -182,11 +197,14 @@ class Bullet{
 }
 
 //clas is not being used
-class Enemey{
+class Enemy{
 	constructor(hp,obj,speed){
 		this.hp = hp;
 		this.obj = obj;
 		this.speed = speed;
+		// i set the negative number as a variable to make the expression look more
+		// understandable
+		const number = -80;
 	}
 	move(){
 		this.obj.nudge(0,0-speed);
@@ -194,4 +212,9 @@ class Enemey{
 	checkCollision(collider){
 
 	}
+}
+
+// health bar system
+class HealthBar {
+
 }
