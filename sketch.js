@@ -4,10 +4,12 @@ const bullets = [];
 const enemies = [];
 const types = [Box,Sphere,Dodecahedron,Octahedron,Tetrahedron,TorusKnot,Torus];
 let pistolSound, leftArrow, rightArrow;
-
+let heartImg;
+let health;
 
 function preload(){
 	pistolSound = loadSound("assets/sounds/pistol.mp3");
+	
 }
 function setup() {
 	// no canvas needed
@@ -83,10 +85,7 @@ function setup() {
 			world.slideToObject( theBox, 2000 );
 		}
 	})
-	// spawn enemies
-	for(let i = 0; i < 1; i ++){
-		createEnemies();
-	}
+	createEnemies();
 	//box.hide();
 	//world.add(box);
 	world.add(gun);
@@ -95,6 +94,9 @@ function setup() {
 	world.add(rightCone);
 	world.add(leftCone);
 	world.add(centerCone);
+
+	// create health bar
+	health = new Health();
 }
 
 function draw() {
@@ -128,7 +130,7 @@ function draw() {
 		}
 	}
 	for(let i = 0; i < enemies.length; i++){
-		enemies[i].nudge(0,0,0.04);
+		enemies[i].move();
 	}
 }
 
@@ -152,16 +154,14 @@ function getDistance(objPos, objTwoPos) {
 	return dist(objPos.x, objPos.y, objPos.z, objTwoPos.x, objTwoPos.y, objTwoPos.z);
 }
 
+/* function to create enemy objects */
 function createEnemies(){
 	const number = -80;
 	// currently i just choose Box as default placeholder for enemy object
-	const obj = new Box({
-		x:0, y:1, z:2,
-		width:1, height: 1, depth: 1,
-		red:random(255), green:random(255), blue:random(255)
-	});
-	world.add(obj);
-	enemies.push(obj);
+	// spawn enemies
+	for(let i = 0; i < 5; i ++){
+		enemies.push(new Enemy(100, 0.3));
+	}
 	
 }
 
@@ -191,30 +191,61 @@ class Bullet{
 		this.myContainer.addChild(this.bullet);
 	}
 	move() {
-		this.bullet.nudge(0,0,0.02);
+		// make the speed faster so its' more real
+		this.bullet.nudge(0,0,0.2);
 	}
 
 }
 
-//clas is not being used
+// enemy class
 class Enemy{
-	constructor(hp,obj,speed){
+	constructor(hp,speed){
 		this.hp = hp;
-		this.obj = obj;
+		
 		this.speed = speed;
 		// i set the negative number as a variable to make the expression look more
 		// understandable
 		const number = -80;
+		const obj = new Box({
+			x:0, y:1, z:2,
+			width:1, height: 1, depth: 1,
+			red:random(255), green:random(255), blue:random(255)
+		});
+		world.add(obj);
+		enemies.push(obj);
+		this.obj = obj;
 	}
 	move(){
-		this.obj.nudge(0,0-speed);
+		this.obj.nudge(0,0-this.speed);
 	}
 	checkCollision(collider){
 
 	}
 }
 
-// health bar system
-class HealthBar {
-
+// health system. default has 5 hearts
+class Health {
+	constructor(){
+		this.health = 5;
+		this.healthUI = new Container3D({
+			x: world.camera.x + 0.1,
+			y: world.camera.y - 0.3,
+			z: world.camera.z,
+			width:3, height: 1, depth: 1,
+			red:random(255), green:random(255), blue:random(255)
+		});
+		for (let i = 0; i < this.health; i++) {
+			const heartPlane = new Plane({
+				x: 0, y:0, z:0, width:100, height:100, asset:'heart', rotationX:-90, repeatX:100, repeatY:100
+			});
+			this.healthUI.add(heartPlane);
+		}
+		world.add(this.healthUI);
+	}
+	show() {
+		
+	}
+	setHealth(number) {
+		this.health = number;
+	}
 }
