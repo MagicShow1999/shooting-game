@@ -7,6 +7,8 @@ let pistolSound, leftArrow, rightArrow;
 let heartImg;
 let health;
 
+let enemyobj;
+
 function preload(){
 	pistolSound = loadSound("assets/sounds/pistol.mp3");
 	
@@ -46,13 +48,6 @@ function setup() {
 		clickFunction: function(theBox) {
 			// update color
 			theBox.setColor( random(255), random(255), random(255) );
-
-			// or hide it!
-			//theBox.hide();
-
-			// move the user toward this box over a 2 second period
-			// (time is expressed in milliseconds)
-			world.slideToObject( theBox, 2000 );
 		}
 	});
 	rightCone = new Cone({
@@ -61,12 +56,6 @@ function setup() {
 		radiusBottom: 1, radiusTop: 1,
 		red:0, green:0, blue:0,
 		clickFunction: function(theBox) {
-
-			// or hide it!
-			//theBox.hide();
-
-			// move the user toward this box over a 2 second period
-			// (time is expressed in milliseconds)
 			world.slideToObject( theBox, 2000 );
 		}
 	});
@@ -76,16 +65,12 @@ function setup() {
 		radiusBottom: 1, radiusTop: 1,
 		red:0, green:0, blue:0,
 		clickFunction: function(theBox) {
-
-			// or hide it!
-			//theBox.hide();
-
-			// move the user toward this box over a 2 second period
-			// (time is expressed in milliseconds)
 			world.slideToObject( theBox, 2000 );
 		}
 	})
+	// spawn enemies
 	createEnemies();
+	
 	//box.hide();
 	//world.add(box);
 	world.add(gun);
@@ -97,22 +82,30 @@ function setup() {
 
 	// create health bar
 	health = new Health();
+	health.showHealth();
 }
 
 function draw() {
+	// change the gun position to always locate around world camera position
 	gun.setPosition(world.camera.x,world.camera.y - 0.3,world.camera.z);
 	gun.rotateY(world.camera.rotationY + 180);
 	gun.rotateX(-world.camera.rotationX);
+	// does the same for health bar
+	// BUG: health bar won't show up
+	// health.obj.setPosition(world.camera.x, world.camera.y, world.camera.z);
+	// health.obj.rotateY(world.camera.rotationY + 180);
+	// health.obj.rotateX(-world.camera.rotationX);
 	for(let i = 0; i < bullets.length; i++){
 		bullets[i].move();
 		const pos = bullets[i].bullet.getWorldPosition();
-		// console.log(pos);
+		// check collision here
 		for(let j = 0; j < enemies.length; j++){
-			const enemyPos = enemies[j].getWorldPosition();
-			if(dist(pos,enemyPos) < 1){
-				world.remove(bullets[i].myContainer);
+			const enemyPos = enemies[j].obj.getWorldPosition();
 
-				world.remove(enemies[j]);
+			if(getDistance(pos,enemyPos) < 1){
+				console.log('here');
+				world.remove(bullets[i].myContainer);
+				world.remove(enemies[j].obj);
 				bullets.splice(i, 1);
 				i--;
 				enemies.splice(j,1);
@@ -131,18 +124,25 @@ function draw() {
 	}
 	for(let i = 0; i < enemies.length; i++){
 		enemies[i].move();
+		// check the collision with the player
+		if(enemies[i].checkCollision(world.camera)) {
+			enemies.splice(i, 1);
+			i--;
+		}
 	}
 }
 
 
 
 function mousePressed(){
-	pistolSound.play();
+	// TODO: ENABLE THE SOUND! Because in dev this sound is annoying... so i just commented out 
+	// pistolSound.play();
+
 	const temp = new Bullet();
-	// don't know why but it seems that this function is run 3 times each time i click on mouse
-	console.log(temp);
+	// BUG: don't know why but it seems that this function is run 3 times each time i click on mouse
+	console.log('printed three times');
 	bullets.push( temp );
-	console.log(bullets.length);
+	// console.log(bullets.length);
 }
 
 /* Get random values between min and max. Copied from mozilla */
@@ -156,16 +156,21 @@ function getDistance(objPos, objTwoPos) {
 
 /* function to create enemy objects */
 function createEnemies(){
-	const number = -80;
 	// currently i just choose Box as default placeholder for enemy object
-	// spawn enemies
-	for(let i = 0; i < 5; i ++){
-		enemies.push(new Enemy(100, 0.3));
+	// spawn starwar enemies
+	for(let i = 0; i < 3; i ++){
+		const pos = { x:random(-5,5), y:0.8, z:random(-15,5)};
+		enemies.push(new Enemy("starwar", 0.01, 6, 0.01, pos));
+	}
+	// spawn green monsters
+	for(let i = 0; i < 3; i ++){
+		const pos = { x:random(-5,5), y:0.5, z:random(-15,5)};
+		enemies.push(new Enemy("green_monster", 1, 3, 0.02, pos));
 	}
 	
 }
 
-
+// bullet class
 class Bullet{
 	constructor() {
 		const boxPosition = box.getWorldPosition();
@@ -199,27 +204,34 @@ class Bullet{
 
 // enemy class
 class Enemy{
-	constructor(hp,speed){
+	constructor(name, scale, hp, speed, pos){
+
 		this.hp = hp;
-		
 		this.speed = speed;
-		// i set the negative number as a variable to make the expression look more
-		// understandable
-		const number = -80;
-		const obj = new Box({
-			x:0, y:1, z:2,
-			width:1, height: 1, depth: 1,
-			red:random(255), green:random(255), blue:random(255)
+		this.pos = pos;
+
+		this.obj = new OBJ({
+			asset: `${name}_obj`,
+			mtl: `${name}_mtl`,
+			x: pos.x,
+			y: pos.y,
+			z: pos.z,
+			scaleX: scale,
+			scaleY: scale,
+			scaleZ: scale,
 		});
-		world.add(obj);
-		enemies.push(obj);
-		this.obj = obj;
+
+		world.add(this.obj);
 	}
 	move(){
-		this.obj.nudge(0,0-this.speed);
+		// TODO: make the enemies always move towards player
+		this.obj.nudge(0,0,this.speed);
 	}
 	checkCollision(collider){
-
+		if(getDistance(this.pos, collider) < 0.1) {
+			return true;
+		} 
+		return false;
 	}
 }
 
@@ -227,23 +239,22 @@ class Enemy{
 class Health {
 	constructor(){
 		this.health = 5;
-		this.healthUI = new Container3D({
+		this.obj = new Box({
 			x: world.camera.x + 0.1,
 			y: world.camera.y - 0.3,
-			z: world.camera.z,
+			z: world.camera.z + 3,
 			width:3, height: 1, depth: 1,
-			red:random(255), green:random(255), blue:random(255)
 		});
+		
+		world.add(this.obj);
+	}
+	showHealth() {
 		for (let i = 0; i < this.health; i++) {
 			const heartPlane = new Plane({
-				x: 0, y:0, z:0, width:100, height:100, asset:'heart', rotationX:-90, repeatX:100, repeatY:100
+				x: 0, y:0, z:0, width:1, height:1, asset:'heart'
 			});
-			this.healthUI.add(heartPlane);
+			this.obj.add(heartPlane);
 		}
-		world.add(this.healthUI);
-	}
-	show() {
-		
 	}
 	setHealth(number) {
 		this.health = number;

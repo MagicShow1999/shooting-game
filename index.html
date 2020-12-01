@@ -1,33 +1,35 @@
 <!doctype html>
 <html lang="en-us">
-	<head>
-		<meta charset="UTF-8">
+<head>
+	<meta charset="UTF-8">
 
-		<!-- P5 libraries -->
-		<script src="https://cdn.jsdelivr.net/npm/p5@1.1.9/lib/p5.js"></script>
-		<script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.1.9/addons/p5.sound.js"></script>
-		<!-- A-Frame libraries -->
-		<script src="https://aframe.io/releases/1.0.4/aframe.min.js"></script>
+	<!-- P5 libraries -->
+	<script src="https://cdn.jsdelivr.net/npm/p5@1.1.9/lib/p5.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.1.9/addons/p5.sound.js"></script>
+	<!-- A-Frame libraries -->
+	<script src="https://aframe.io/releases/1.0.4/aframe.min.js"></script>
 
-		<!-- AFrameP5 library -->
-		<script src="https://craignyu.github.io/aframep5/libraries/aframep5.js"></script>
+	<!-- AFrameP5 library -->
+	<script src="https://craignyu.github.io/aframep5/libraries/aframep5.js"></script>
 
-		<!-- P5 Sketch -->
-		<script src="sketch.js"></script>
+	<!-- P5 Sketch -->
+	<script src="sketch.js"></script>
+<!-- 	<script src="bullet.js"></script>
+	<script src="enemy.js"></script>
+	<script src="health.js"></script> -->
+	<!-- custom styles -->
+	<style>
+		body {
+			padding: 0;
+			margin: 0;
+		}
+	</style>
+</head>
+<body>
+	<h1> VR Shooting Game </h1>
 
-		<!-- custom styles -->
-		<style>
-			body {
-				padding: 0;
-				margin: 0;
-			}
-		</style>
-	</head>
-	<body>
-		<h1> VR Shooting Game </h1>
-
-		<!-- container to hold our VR scene - make sure to give this element an ID of 'VRScene' -->
-	    <a-scene id="VRScene">
+	<!-- container to hold our VR scene - make sure to give this element an ID of 'VRScene' -->
+	<a-scene id="VRScene">
 
 	    	<!--
 		       The 'a-assets' container is used to load in any external artwork you may want to use as "textures" for your objects.
@@ -40,26 +42,28 @@
 		       Example:
 
 		       <img id="ITEM_ID_GOES_HERE" src="images/gold_block.png">
-			-->
+		   -->
 
-				<a-assets id="VRAssets">
-					<img id="ground" src="assets/images/ground.jpg" />
-					<img id="heart" src="assets/images/ground.jpg" />
-					<img src="assets/images/skybox.jpg" id="sky1"></a-assets>
-					<a-asset id="gun_obj" src="assets/pistol/gun.obj"></a-asset>
-					<a-asset id="gun_mtl" src="assets/pistol/gun.mtl"></a-asset>
-					<a-asset id="gun_obj" src="assets/pistol/gun.obj"></a-asset>
-					<a-asset id="gun_mtl" src="assets/pistol/gun.mtl"></a-asset>
-					<a-asset id="bullet_obj" src="assets/bullet/bullet.obj"></a-asset>
-					<a-asset id="bullet_mtl" src="assets/bullet/bullet.mtl"></a-asset>
+		   <a-assets id="VRAssets">
+		   	<img id="ground" src="assets/images/ground.jpg" />
+		   	<img id="heart" src="assets/images/ground.jpg" />
+		   	<img src="assets/images/skybox.jpg" id="sky1"></a-assets>
+		   	<a-asset id="gun_obj" src="assets/pistol/gun.obj"></a-asset>
+		   	<a-asset id="gun_mtl" src="assets/pistol/gun.mtl"></a-asset>
+		   	<a-asset id="starwar_obj" src="assets/starwar/starwar.obj"></a-asset>
+		   	<a-asset id="starwar_mtl" src="assets/starwar/starwar.mtl"></a-asset>
+		   	<a-asset id="green_monster_obj" src="assets/green_monster/model.obj"></a-asset>
+		   	<a-asset id="green_monster_mtl" src="assets/green_monster/materials.mtl"></a-asset>
+		   	<a-asset id="bullet_obj" src="assets/bullet/bullet.obj"></a-asset>
+		   	<a-asset id="bullet_mtl" src="assets/bullet/bullet.mtl"></a-asset>
 
-				</a-assets>
+		   </a-assets>
 
-				<a-sky id="theSky" src="#sky1" color="rgb(255,255,255)"></a-sky>
+		   <a-sky id="theSky" src="#sky1" color="rgb(255,255,255)"></a-sky>
 
-		    </a-scene>
+		</a-scene>
 
-	    </a-scene>
+	</a-scene>
 
-	</body>
+</body>
 </html>
