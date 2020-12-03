@@ -8,6 +8,7 @@ let heartImg;
 let health;
 
 let enemyobj;
+let cooldown = 0;
 
 function preload(){
 	pistolSound = loadSound("assets/sounds/pistol.mp3");
@@ -138,10 +139,17 @@ function mousePressed(){
 	// TODO: ENABLE THE SOUND! Because in dev this sound is annoying... so i just commented out 
 	// pistolSound.play();
 
-	const temp = new Bullet();
+	
+	if (cooldown < frameCount) {
+		const temp = new Bullet();
+		cooldown = frameCount;
+		console.log('printed three times');
+		bullets.push( temp );
+	}
+	
+
 	// BUG: don't know why but it seems that this function is run 3 times each time i click on mouse
-	console.log('printed three times');
-	bullets.push( temp );
+	
 	// console.log(bullets.length);
 }
 
