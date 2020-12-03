@@ -124,6 +124,7 @@ function draw() {
 	}
 	for(let i = 0; i < enemies.length; i++){
 		enemies[i].move(gun);
+		enemies[i].lookAt("[camera]");
 		// check the collision with the player
 		if(enemies[i].checkCollision(world.camera)) {
 			enemies[i].remove();
@@ -167,13 +168,18 @@ function createEnemies(){
 	// spawn starwar enemies
 	for(let i = 0; i < 3; i ++){
 		const pos = { x:random(-5,5), y:0.8, z:random(-15,5)};
-		enemies.push(new Enemy("starwar", 0.01, 6, 0.02, pos));
+		const enemy = new Enemy("starwar", 0.01, 6, 0.02, pos, 45);
+	  enemy.lookAt("[camera]");
+		enemies.push(enemy);
 	}
 	// spawn green monsters
 	for(let i = 0; i < 3; i ++){
 		const pos = { x:random(-5,5), y:0.5, z:random(-15,5)};
-		enemies.push(new Enemy("green_monster", 1, 3, 0.03, pos));
+		const enemy = new Enemy("green_monster", 1, 3, 0.03, pos, -60);
+		enemy.lookAt("[camera]");
+		enemies.push(enemy);
 	}
+
 
 }
 
@@ -211,7 +217,7 @@ class Bullet{
 
 // enemy class
 class Enemy{
-	constructor(name, scale, hp, speed, pos){
+	constructor(name, scale, hp, speed, pos, rotY){
 
 		this.hp = hp;
 		this.speed = speed;
@@ -244,6 +250,9 @@ class Enemy{
 		let zSpeed = this.speed*Math.cos(angle);
 		this.obj.nudge(xSpeed,0,0);
 		this.obj.nudge(0,0,zSpeed);
+	}
+	lookAt(objective){
+		this.obj.tag.setAttribute('look-at',objective);
 	}
 	checkCollision(collider){
 		if(getDistance(this.obj, collider) < 1) {
