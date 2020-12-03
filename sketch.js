@@ -12,7 +12,7 @@ let cooldown = 0;
 
 function preload(){
 	pistolSound = loadSound("assets/sounds/pistol.mp3");
-	
+
 }
 function setup() {
 	// no canvas needed
@@ -47,8 +47,7 @@ function setup() {
 		radiusBottom: 1, radiusTop: 1,
 		red:0, green:0, blue:0,
 		clickFunction: function(theBox) {
-			// update color
-			theBox.setColor( random(255), random(255), random(255) );
+			world.slideToObject( theBox, 2000 );
 		}
 	});
 	rightCone = new Cone({
@@ -71,7 +70,7 @@ function setup() {
 	})
 	// spawn enemies
 	createEnemies();
-	
+
 	//box.hide();
 	//world.add(box);
 	world.add(gun);
@@ -124,9 +123,10 @@ function draw() {
 		}
 	}
 	for(let i = 0; i < enemies.length; i++){
-		enemies[i].move();
+		enemies[i].move(gun);
 		// check the collision with the player
 		if(enemies[i].checkCollision(world.camera)) {
+			enemies[i].remove();
 			enemies.splice(i, 1);
 			i--;
 		}
@@ -136,20 +136,19 @@ function draw() {
 
 
 function mousePressed(){
-	// TODO: ENABLE THE SOUND! Because in dev this sound is annoying... so i just commented out 
+	// TODO: ENABLE THE SOUND! Because in dev this sound is annoying... so i just commented out
 	// pistolSound.play();
 
-	
 	if (cooldown < frameCount) {
 		const temp = new Bullet();
 		cooldown = frameCount;
 		console.log('printed three times');
 		bullets.push( temp );
 	}
-	
+
 
 	// BUG: don't know why but it seems that this function is run 3 times each time i click on mouse
-	
+
 	// console.log(bullets.length);
 }
 
@@ -168,14 +167,14 @@ function createEnemies(){
 	// spawn starwar enemies
 	for(let i = 0; i < 3; i ++){
 		const pos = { x:random(-5,5), y:0.8, z:random(-15,5)};
-		enemies.push(new Enemy("starwar", 0.01, 6, 0.01, pos));
+		enemies.push(new Enemy("starwar", 0.01, 6, 0.02, pos));
 	}
 	// spawn green monsters
 	for(let i = 0; i < 3; i ++){
 		const pos = { x:random(-5,5), y:0.5, z:random(-15,5)};
-		enemies.push(new Enemy("green_monster", 1, 3, 0.02, pos));
+		enemies.push(new Enemy("green_monster", 1, 3, 0.03, pos));
 	}
-	
+
 }
 
 // bullet class
@@ -224,6 +223,9 @@ class Enemy{
 			x: pos.x,
 			y: pos.y,
 			z: pos.z,
+			rotationX:0,
+			rotationY:0,
+			rotationZ:0,
 			scaleX: scale,
 			scaleY: scale,
 			scaleZ: scale,
@@ -231,15 +233,26 @@ class Enemy{
 
 		world.add(this.obj);
 	}
-	move(){
-		// TODO: make the enemies always move towards player
-		this.obj.nudge(0,0,this.speed);
+	move(objective){
+		//strange bug where the enemy moves away from the player when they swap to a different base
+		let objPos = objective.getWorldPosition();
+		let thisPos = this.obj.getWorldPosition();
+		let deltaX = objPos.x - thisPos.x;
+		let deltaZ = objPos.z - thisPos.z;
+		let angle = Math.atan(deltaX/deltaZ);
+		let xSpeed = this.speed * Math.sin(angle);
+		let zSpeed = this.speed*Math.cos(angle);
+		this.obj.nudge(xSpeed,0,0);
+		this.obj.nudge(0,0,zSpeed);
 	}
 	checkCollision(collider){
-		if(getDistance(this.pos, collider) < 0.1) {
+		if(getDistance(this.obj, collider) < 1) {
 			return true;
-		} 
+		}
 		return false;
+	}
+	remove(){
+		world.remove(this.obj);
 	}
 }
 
@@ -253,7 +266,7 @@ class Health {
 			z: world.camera.z + 3,
 			width:3, height: 1, depth: 1,
 		});
-		
+
 		world.add(this.obj);
 	}
 	showHealth() {
