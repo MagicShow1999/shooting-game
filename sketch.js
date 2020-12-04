@@ -3,16 +3,24 @@ let world,gun,box;
 const bullets = [];
 const enemies = [];
 const types = [Box,Sphere,Dodecahedron,Octahedron,Tetrahedron,TorusKnot,Torus];
+
+// import assets here
 let pistolSound, leftArrow, rightArrow;
 let heartImg;
 let health;
 
-let enemyobj;
+
+// other global variables
 let cooldown = 0;
+let changeAmmo = true;
+let bullets_left = 5;
+let hearts_left = 5;
+
 
 function preload(){
 	pistolSound = loadSound("assets/sounds/pistol.mp3");
-
+	hurtSound = loadSound("assets/sounds/hurt.ogg");
+	enemyHurtSound = loadSound("assets/sounds/enemy-hurt.wav");
 }
 function setup() {
 	// no canvas needed
@@ -86,6 +94,8 @@ function setup() {
 	world.add(leftCone);
 	world.add(centerCone);
 
+	setHealth(5);
+	setAmmo(5);
 }
 
 function draw() {
@@ -99,56 +109,93 @@ function draw() {
 		const pos = bullets[i].bullet.getWorldPosition();
 		// check collision here
 		for(let j = 0; j < enemies.length; j++){
-			const enemyPos = enemies[j].obj.getWorldPosition();
-
-			if(getDistance(pos,enemyPos) < 1){
-				console.log('here');
-				world.remove(bullets[i].myContainer);
-				world.remove(enemies[j].container);
-				bullets.splice(i, 1);
-				i--;
-				enemies.splice(j,1);
-				j--;
+			
+			if(enemies[j].checkCollision(pos)){
+				const enemy_hp = enemies[j].hp;
+				enemyHurtSound.play();
+				if (enemy_hp == 1) {
+					world.remove(enemies[j].enemyContainer);
+					enemies.splice(j,1);
+					j--;
+				} else {
+					enemies[j].reduceHp();
+					world.remove(bullets[i].myContainer);
+					bullets.splice(i, 1);
+					i--;
+				}
 				break;
 			}
 		}
 		// get current position of the player
 		const playerPos = world.getUserPosition();
-		if (getDistance(pos, playerPos) > 50) {
+		// remove the bullets if they are far away from player.
+		if (getDistance(pos, playerPos) > 10 && bullets.length !== 0) {
 			world.remove(bullets[i].myContainer);
 			bullets.splice(i, 1);
 			i--;
 			continue;
 		}
 	}
+
 	for(let i = 0; i < enemies.length; i++){
 		enemies[i].move(gun);
 		enemies[i].lookAt(gun);
+		// CUR CODE
 		// check the collision with the player
-		if(enemies[i].checkCollision(world.camera)) {
-			enemies[i].remove();
+		// if(enemies[i].checkCollision(world.camera)) {
+		// 	enemies[i].remove();
+		// 	enemies.splice(i, 1);
+		// 	i--;
+		// }
+
+		// check the collision with the player
+		// if true, then 1. remove the enemy 2. reduce the health hearts by 1
+		if(enemies[i].checkPlayerCollision(world.camera)) {
+			world.remove(enemies[i].enemyContainer);
 			enemies.splice(i, 1);
 			i--;
+			hearts_left -= 1;
+			setHealth(hearts_left);
+			hurtSound.play();
 		}
 	}
+
+	if (changeAmmo) {
+		changeAmmo = false;
+		setAmmo(bullets_left);
+	}
+
 }
 
 
 
 function mousePressed(){
-
-	if (cooldown < frameCount) {
-		const temp = new Bullet();
+	if (cooldown < frameCount && bullets_left >= 0) {
+		// console.log(frameCount);
+		const interval = frameCount - cooldown;
 		cooldown = frameCount;
-		console.log('printed three times');
-		bullets.push( temp );
+		if (bullets_left === 0) {
+			// console.log(interval);
+			// this interval is the cool down. so the player can't
+			// keep shooting if there's no bullet and they need to wait reloading
+			if (interval > 80) {
+				bullets_left = 5;
+			}
+			
+		} else {
+			
+			pistolSound.play();
+			bullets.push(new Bullet());
+			bullets_left -= 1;
+			changeAmmo = true;
+		}
+		
 	}
-
 }
 
 /* Get random values between min and max. Copied from mozilla */
 function getRandomArbitrary(min, max) {
-  return Math.random() * (max - min) + min;
+	return Math.random() * (max - min) + min;
 }
 /* Distance checker that returns the distance of two position objects */
 function getDistance(objPos, objTwoPos) {
@@ -178,6 +225,7 @@ function createEnemies(){
 class Bullet{
 	constructor() {
 		const boxPosition = box.getWorldPosition();
+
 		this.myContainer = new Container3D({
 			x: boxPosition.x,
 			y: boxPosition.y,
@@ -187,21 +235,23 @@ class Bullet{
 			rotationZ: gun.getRotationZ()
 		});
 		world.add(this.myContainer);
-		this.bullet = new OBJ({
-			asset: 'bullet_obj',
-			mtl: 'bullet_mtl',
+		// use generic shape: Sphere instead of 3D obj to increase performance
+		this.bullet = new Sphere({
 			x:0,
 			y:0,
 			z:0,
-			scaleX:0.01,
-			scaleY:0.01,
-			scaleZ:0.01,
+			scaleX: 0.01,
+			scaleY: 0.01,
+			scaleZ: 0.01,
+			red:212,
+			green:175,
+			blue:55
 		});
 		this.myContainer.addChild(this.bullet);
 	}
 	move() {
 		// make the speed faster so its' more real
-		this.bullet.nudge(0,0,0.2);
+		this.bullet.nudge(0,0,0.1);
 	}
 
 }
@@ -209,17 +259,18 @@ class Bullet{
 // enemy class
 class Enemy{
 	constructor(name, scale, hp, speed, pos, rotY){
-
+		this.fullHp = hp;
 		this.hp = hp;
 		this.speed = speed;
 		this.pos = pos;
-		this.container = new Container3D({
+		this.enemyContainer = new Container3D({
 			x: pos.x, y: pos.y, z: pos.z,
 			rotationX:0,
 			rotationY:0,
-			rotationZ:0
+			rotationZ:0,
+			red:255, green:255, blue:255,
 		});
-		world.add(this.container);
+		world.add(this.enemyContainer);
 		this.obj = new OBJ({
 			asset: `${name}_obj`,
 			mtl: `${name}_mtl`,
@@ -233,7 +284,18 @@ class Enemy{
 			scaleY: scale,
 			scaleZ: scale,
 		});
-		this.container.addChild(this.obj);
+		const yValue = name === "green_monster" ? 0.4 : 0.8;
+		this.healthbar = new Plane({
+			x: 0,
+			y: yValue,
+			z: 0,
+			width: 1,
+			height: 0.1,
+			red:random(255), green:0, blue: 0,
+		}) 
+
+		this.enemyContainer.add(this.healthbar);
+		this.enemyContainer.addChild(this.obj);
 	}
 	move(objective){
 		let objPos = objective.getWorldPosition();
@@ -260,14 +322,28 @@ class Enemy{
 		v.subVectors(pos, cPos).add(cPos);
 		this.container.tag.object3D.lookAt( v )
 	}
+	// this checks the collision with bullet 
 	checkCollision(collider){
-		if(getDistance(this.container, collider) < 1) {
+		if(getDistance(this.enemyContainer, collider) < 0.55) {
 			return true;
 		}
 		return false;
 	}
+	// this checks the collision with the player
+	checkPlayerCollision(player) {
+		const pos = {x: this.enemyContainer.x, y: this.enemyContainer.y, z: this.enemyContainer.z};
+		// console.log(getDistance(pos, collider));
+		if(getDistance(pos, player) <= 1) {
+			return true;
+		} 
+		return false;
+	}
+	reduceHp() {
+		this.hp -= 1;
+		this.healthbar.setWidth(this.hp / this.fullHp);
+	}
 	remove(){
-		world.remove(this.container);
+		world.remove(this.enemyContainer);
 	}
 }
 
