@@ -86,9 +86,6 @@ function setup() {
 	world.add(leftCone);
 	world.add(centerCone);
 
-	// create health bar
-	//health = new Health();
-	//health.showHealth();
 }
 
 function draw() {
@@ -96,11 +93,7 @@ function draw() {
 	gun.setPosition(world.camera.x,world.camera.y - 0.3,world.camera.z);
 	gun.rotateY(world.camera.rotationY + 180);
 	gun.rotateX(-world.camera.rotationX);
-	// does the same for health bar
-	// BUG: health bar won't show up
-	// health.obj.setPosition(world.camera.x, world.camera.y, world.camera.z);
-	// health.obj.rotateY(world.camera.rotationY + 180);
-	// health.obj.rotateX(-world.camera.rotationX);
+
 	for(let i = 0; i < bullets.length; i++){
 		bullets[i].move();
 		const pos = bullets[i].bullet.getWorldPosition();
@@ -143,8 +136,6 @@ function draw() {
 
 
 function mousePressed(){
-	// TODO: ENABLE THE SOUND! Because in dev this sound is annoying... so i just commented out
-	// pistolSound.play();
 
 	if (cooldown < frameCount) {
 		const temp = new Bullet();
@@ -153,10 +144,6 @@ function mousePressed(){
 		bullets.push( temp );
 	}
 
-
-	// BUG: don't know why but it seems that this function is run 3 times each time i click on mouse
-
-	// console.log(bullets.length);
 }
 
 /* Get random values between min and max. Copied from mozilla */
@@ -284,28 +271,3 @@ class Enemy{
 	}
 }
 
-// health system. default has 5 hearts
-class Health {
-	constructor(){
-		this.health = 5;
-		this.obj = new Box({
-			x: world.camera.x + 0.1,
-			y: world.camera.y - 0.3,
-			z: world.camera.z + 3,
-			width:3, height: 1, depth: 1,
-		});
-
-		world.add(this.obj);
-	}
-	showHealth() {
-		for (let i = 0; i < this.health; i++) {
-			const heartPlane = new Plane({
-				x: 0, y:0, z:0, width:1, height:1, asset:'heart'
-			});
-			this.obj.add(heartPlane);
-		}
-	}
-	setHealth(number) {
-		this.health = number;
-	}
-}
