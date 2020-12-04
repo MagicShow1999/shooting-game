@@ -8,7 +8,7 @@
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.1.9/addons/p5.sound.js"></script>
 	<!-- A-Frame libraries -->
 	<script src="https://aframe.io/releases/1.0.4/aframe.min.js"></script>
-
+	<script src="../p5/addons/p5.sound.min.js"></script>
 	<!-- AFrameP5 library -->
 	<script src="https://craignyu.github.io/aframep5/libraries/aframep5.js"></script>
 
@@ -23,9 +23,32 @@
 			padding: 0;
 			margin: 0;
 		}
+		#health {
+			position: absolute;
+			z-index: 100;
+			left: 50px;
+			bottom: 50px;
+			height: 50px;
+			width: 100px;
+			display: flex;
+		}
+		#ammo {
+			position: absolute;
+			z-index: 100;
+			right: 50px;
+			bottom: 50px;
+			height: 50px;
+			width: 100px;
+			display: flex;
+		}
+		span {
+			color: black;
+		}
 	</style>
 </head>
 <body>
+	<div id="health"></div>
+	<div id="ammo"></div>
 	<h1> VR Shooting Game </h1>
 
 	<!-- container to hold our VR scene - make sure to give this element an ID of 'VRScene' -->
@@ -46,7 +69,8 @@
 
 		   <a-assets id="VRAssets">
 		   	<img id="ground" src="assets/images/ground.jpg" />
-		   	<img id="heart" src="assets/images/ground.jpg" />
+		   	<img id="heart" src="assets/images/heart.jpg" />
+		   	<img id="ammo1" src="assets/images/ammo1.png" />
 		   	<img src="assets/images/skybox.jpg" id="sky1"></a-assets>
 		   	<a-asset id="gun_obj" src="assets/pistol/gun.obj"></a-asset>
 		   	<a-asset id="gun_mtl" src="assets/pistol/gun.mtl"></a-asset>
@@ -54,11 +78,8 @@
 		   	<a-asset id="starwar_mtl" src="assets/starwar/starwar.mtl"></a-asset>
 		   	<a-asset id="green_monster_obj" src="assets/green_monster/model.obj"></a-asset>
 		   	<a-asset id="green_monster_mtl" src="assets/green_monster/materials.mtl"></a-asset>
-		   	<a-asset id="bullet_obj" src="assets/bullet/bullet.obj"></a-asset>
-		   	<a-asset id="bullet_mtl" src="assets/bullet/bullet.mtl"></a-asset>
-
+		   
 		   </a-assets>
-
 		   <a-sky id="theSky" src="#sky1" color="rgb(255,255,255)"></a-sky>
 
 		</a-scene>
