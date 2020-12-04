@@ -47,7 +47,10 @@ function setup() {
 		radiusBottom: 1, radiusTop: 1,
 		red:0, green:0, blue:0,
 		clickFunction: function(theBox) {
-			world.slideToObject( theBox, 2000 );
+			world.teleportToObject( theBox );
+			//TODO: trying to set the rotation of the user after teleport but it's not going well
+			rot = THREE.Vector3(0,180,0)
+			world.camera.storeRotation(rot);
 		}
 	});
 	rightCone = new Cone({
@@ -55,8 +58,10 @@ function setup() {
 		height:1,
 		radiusBottom: 1, radiusTop: 1,
 		red:0, green:0, blue:0,
-		clickFunction: function(theBox) {
-			world.slideToObject( theBox, 2000 );
+		clickFunction: function(theBox ) {
+			world.teleportToObject( theBox );
+			rot = THREE.Vector3(0,180,0)
+			world.camera.storeRotation(rot);
 		}
 	});
 	leftCone = new Cone({
@@ -65,12 +70,13 @@ function setup() {
 		radiusBottom: 1, radiusTop: 1,
 		red:0, green:0, blue:0,
 		clickFunction: function(theBox) {
-			world.slideToObject( theBox, 2000 );
+			world.teleportToObject( theBox );
+			rot = THREE.Vector3(0,180,0)
+			world.camera.storeRotation(rot);
 		}
 	})
 	// spawn enemies
 	createEnemies();
-
 	//box.hide();
 	//world.add(box);
 	world.add(gun);
@@ -81,8 +87,8 @@ function setup() {
 	world.add(centerCone);
 
 	// create health bar
-	health = new Health();
-	health.showHealth();
+	//health = new Health();
+	//health.showHealth();
 }
 
 function draw() {
@@ -105,7 +111,7 @@ function draw() {
 			if(getDistance(pos,enemyPos) < 1){
 				console.log('here');
 				world.remove(bullets[i].myContainer);
-				world.remove(enemies[j].obj);
+				world.remove(enemies[j].container);
 				bullets.splice(i, 1);
 				i--;
 				enemies.splice(j,1);
@@ -115,7 +121,7 @@ function draw() {
 		}
 		// get current position of the player
 		const playerPos = world.getUserPosition();
-		if (dist(pos, playerPos) < 3) {
+		if (getDistance(pos, playerPos) > 50) {
 			world.remove(bullets[i].myContainer);
 			bullets.splice(i, 1);
 			i--;
@@ -124,7 +130,7 @@ function draw() {
 	}
 	for(let i = 0; i < enemies.length; i++){
 		enemies[i].move(gun);
-		enemies[i].lookAt("[camera]");
+		enemies[i].lookAt(gun);
 		// check the collision with the player
 		if(enemies[i].checkCollision(world.camera)) {
 			enemies[i].remove();
@@ -169,14 +175,12 @@ function createEnemies(){
 	for(let i = 0; i < 3; i ++){
 		const pos = { x:random(-5,5), y:0.8, z:random(-15,5)};
 		const enemy = new Enemy("starwar", 0.01, 6, 0.02, pos, 45);
-	  enemy.lookAt("[camera]");
 		enemies.push(enemy);
 	}
 	// spawn green monsters
 	for(let i = 0; i < 3; i ++){
 		const pos = { x:random(-5,5), y:0.5, z:random(-15,5)};
 		const enemy = new Enemy("green_monster", 1, 3, 0.03, pos, -60);
-		enemy.lookAt("[camera]");
 		enemies.push(enemy);
 	}
 
@@ -222,46 +226,61 @@ class Enemy{
 		this.hp = hp;
 		this.speed = speed;
 		this.pos = pos;
-
+		this.container = new Container3D({
+			x: pos.x, y: pos.y, z: pos.z,
+			rotationX:0,
+			rotationY:0,
+			rotationZ:0
+		});
+		world.add(this.container);
 		this.obj = new OBJ({
 			asset: `${name}_obj`,
 			mtl: `${name}_mtl`,
-			x: pos.x,
-			y: pos.y,
-			z: pos.z,
+			x: 0,
+			y: 0,
+			z: 0,
 			rotationX:0,
-			rotationY:0,
+			rotationY:rotY,
 			rotationZ:0,
 			scaleX: scale,
 			scaleY: scale,
 			scaleZ: scale,
 		});
-
-		world.add(this.obj);
+		this.container.addChild(this.obj);
 	}
 	move(objective){
-		//strange bug where the enemy moves away from the player when they swap to a different base
 		let objPos = objective.getWorldPosition();
-		let thisPos = this.obj.getWorldPosition();
+		let thisPos = this.container.getWorldPosition();
 		let deltaX = objPos.x - thisPos.x;
 		let deltaZ = objPos.z - thisPos.z;
 		let angle = Math.atan(deltaX/deltaZ);
 		let xSpeed = this.speed * Math.sin(angle);
-		let zSpeed = this.speed*Math.cos(angle);
-		this.obj.nudge(xSpeed,0,0);
-		this.obj.nudge(0,0,zSpeed);
+		let zSpeed = this.speed * Math.cos(angle);
+		if(thisPos.z > objPos.z ){
+			this.container.nudge(-xSpeed,0,0);
+			this.container.nudge(0,0,-zSpeed);
+		}
+		else{
+			this.container.nudge(xSpeed,0,0);
+			this.container.nudge(0,0,zSpeed);
+		}
 	}
 	lookAt(objective){
-		this.obj.tag.setAttribute('look-at',objective);
+		let pos = objective.getWorldPosition();
+		const cPos = this.container.getWorldPosition();
+		// compute a rotation vector from the cone to the object to look at
+		let v = new THREE.Vector3()
+		v.subVectors(pos, cPos).add(cPos);
+		this.container.tag.object3D.lookAt( v )
 	}
 	checkCollision(collider){
-		if(getDistance(this.obj, collider) < 1) {
+		if(getDistance(this.container, collider) < 1) {
 			return true;
 		}
 		return false;
 	}
 	remove(){
-		world.remove(this.obj);
+		world.remove(this.container);
 	}
 }
 
