@@ -24,11 +24,57 @@
 			padding: 0;
 			margin: 0;
 		}
+		#health {
+			position: absolute;
+			z-index: 100;
+			left: 50px;
+			bottom: 50px;
+			height: 50px;
+			width: 100px;
+			display: flex;
+		}
+		#ammo {
+			position: absolute;
+			z-index: 100;
+			right: 50px;
+			bottom: 50px;
+			height: 50px;
+			width: 100px;
+			display: flex;
+		}
+		#gameover {
+			display: none;
+			border-radius: 20px;
+			z-index: 100;
+			position: absolute;
+			width: 200px;
+			height: 200px;
+			left: 50%;
+			top: 50%;
+			transform: translate(-50%, -50%);
+			
+		}
+		span {
+			font-size: 40px;
+			color: black;
+		}
+		#replay {
+			width: 100px;
+			height: 50px;
+			margin: auto;
+			border-radius: 15px;
+			background-color: white;
+			border: none;
+			color: black;
+			cursor: pointer;
+		}
 	</style>
 </head>
 <body>
 	<h1> VR Shooting Game </h1>
-
+	<div id="health"></div>
+	<div id="ammo"></div>
+	<div id="gameover"><span>Game Over!</span><button id="replay">Play again!</button></div>
 	<!-- container to hold our VR scene - make sure to give this element an ID of 'VRScene' -->
 	<a-scene id="VRScene">
 

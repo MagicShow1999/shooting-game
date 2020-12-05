@@ -1,7 +1,7 @@
 // variable to hold a reference to our A-Frame world
 let world,gun,box;
-const bullets = [];
-const enemies = [];
+let bullets = [];
+let enemies = [];
 const types = [Box,Sphere,Dodecahedron,Octahedron,Tetrahedron,TorusKnot,Torus];
 
 // import assets here
@@ -15,12 +15,13 @@ let cooldown = 0;
 let changeAmmo = true;
 let bullets_left = 5;
 let hearts_left = 5;
-
+let gameover = false;
 
 function preload(){
 	pistolSound = loadSound("assets/sounds/pistol.mp3");
 	hurtSound = loadSound("assets/sounds/hurt.ogg");
 	enemyHurtSound = loadSound("assets/sounds/enemy-hurt.wav");
+	gameoverSound = loadSound("assets/sounds/gameover.wav");
 }
 function setup() {
 	// no canvas needed
@@ -83,8 +84,7 @@ function setup() {
 			world.camera.storeRotation(rot);
 		}
 	})
-	// spawn enemies
-	createEnemies();
+	
 	//box.hide();
 	//world.add(box);
 	world.add(gun);
@@ -94,77 +94,98 @@ function setup() {
 	world.add(leftCone);
 	world.add(centerCone);
 
-	setHealth(5);
-	setAmmo(5);
+	initialize();
+	document.getElementById("replay").addEventListener("click", initialize);
 }
 
-function draw() {
-	// change the gun position to always locate around world camera position
-	gun.setPosition(world.camera.x,world.camera.y - 0.3,world.camera.z);
-	gun.rotateY(world.camera.rotationY + 180);
-	gun.rotateX(-world.camera.rotationX);
+function initialize() {
+	changeAmmo = true;
+	bullets_left = 5;
+	hearts_left = 5;
 
-	for(let i = 0; i < bullets.length; i++){
-		bullets[i].move();
-		const pos = bullets[i].bullet.getWorldPosition();
-		// check collision here
-		for(let j = 0; j < enemies.length; j++){
-			
-			if(enemies[j].checkCollision(pos)){
-				const enemy_hp = enemies[j].hp;
-				enemyHurtSound.play();
-				if (enemy_hp == 1) {
-					world.remove(enemies[j].enemyContainer);
-					enemies.splice(j,1);
-					j--;
-				} else {
-					enemies[j].reduceHp();
-					world.remove(bullets[i].myContainer);
-					bullets.splice(i, 1);
-					i--;
+	bullets = [];
+	enemies = [];
+	setHealth(5);
+	setAmmo(5);
+	// spawn enemies
+	createEnemies();
+	gameover = false;
+	document.getElementById("gameover").style.display = "none";
+}
+function draw() {
+	if (gameover) {
+		initialize();
+	} else {
+		// change the gun position to always locate around world camera position
+		gun.setPosition(world.camera.x,world.camera.y - 0.3,world.camera.z);
+		gun.rotateY(world.camera.rotationY + 180);
+		gun.rotateX(-world.camera.rotationX);
+
+		for(let i = 0; i < bullets.length; i++){
+			bullets[i].move();
+			const pos = bullets[i].bullet.getWorldPosition();
+			// check collision here
+			for(let j = 0; j < enemies.length; j++){
+				
+				if(enemies[j].checkCollision(pos)){
+					const enemy_hp = enemies[j].hp;
+					if (enemy_hp == 1) {
+						enemyHurtSound.play();
+						world.remove(enemies[j].enemyContainer);
+						enemies.splice(j,1);
+						j--;
+					} else {
+						enemies[j].reduceHp();
+						world.remove(bullets[i].myContainer);
+						bullets.splice(i, 1);
+						i--;
+					}
+					break;
 				}
-				break;
+			}
+			// get current position of the player
+			const playerPos = world.getUserPosition();
+			// remove the bullets if they are far away from player.
+			if (getDistance(pos, playerPos) > 10 && bullets.length !== 0) {
+				world.remove(bullets[i].myContainer);
+				bullets.splice(i, 1);
+				i--;
+				continue;
 			}
 		}
-		// get current position of the player
-		const playerPos = world.getUserPosition();
-		// remove the bullets if they are far away from player.
-		if (getDistance(pos, playerPos) > 10 && bullets.length !== 0) {
-			world.remove(bullets[i].myContainer);
-			bullets.splice(i, 1);
-			i--;
-			continue;
+
+		for(let i = 0; i < enemies.length; i++){
+			enemies[i].move(gun);
+			enemies[i].lookAt(gun);
+			// check the collision with the player
+			// if true, then 1. remove the enemy 2. reduce the health hearts by 1
+			if(enemies[i].checkPlayerCollision(world.camera)) {
+				world.remove(enemies[i].enemyContainer);
+				enemies.splice(i, 1);
+				i--;
+				// if player has no HP, display game over screen
+				if (hearts_left === 1) {
+					// show game over screen in the middle and play game over sound
+					document.getElementById("gameover").style.display= "block";
+					gameoverSound.play();
+					// clear enemies
+					if (enemies.length !== 0) {
+						enemies.forEach(enemy => {
+							enemy.remove();
+						})
+					}
+				}
+				hearts_left -= 1;
+				setHealth(hearts_left);
+				hurtSound.play();
+			}
+		}
+
+		if (changeAmmo) {
+			changeAmmo = false;
+			setAmmo(bullets_left);
 		}
 	}
-
-	for(let i = 0; i < enemies.length; i++){
-		enemies[i].move(gun);
-		enemies[i].lookAt(gun);
-		// CUR CODE
-		// check the collision with the player
-		// if(enemies[i].checkCollision(world.camera)) {
-		// 	enemies[i].remove();
-		// 	enemies.splice(i, 1);
-		// 	i--;
-		// }
-
-		// check the collision with the player
-		// if true, then 1. remove the enemy 2. reduce the health hearts by 1
-		if(enemies[i].checkPlayerCollision(world.camera)) {
-			world.remove(enemies[i].enemyContainer);
-			enemies.splice(i, 1);
-			i--;
-			hearts_left -= 1;
-			setHealth(hearts_left);
-			hurtSound.play();
-		}
-	}
-
-	if (changeAmmo) {
-		changeAmmo = false;
-		setAmmo(bullets_left);
-	}
-
 }
 
 
@@ -178,7 +199,7 @@ function mousePressed(){
 			// console.log(interval);
 			// this interval is the cool down. so the player can't
 			// keep shooting if there's no bullet and they need to wait reloading
-			if (interval > 80) {
+			if (interval > 40) {
 				bullets_left = 5;
 			}
 			
@@ -200,6 +221,47 @@ function getRandomArbitrary(min, max) {
 /* Distance checker that returns the distance of two position objects */
 function getDistance(objPos, objTwoPos) {
 	return dist(objPos.x, objPos.y, objPos.z, objTwoPos.x, objTwoPos.y, objTwoPos.z);
+}
+
+/* this function directly alters the DOM and display different numbers of hearts
+	at bottom left
+	@param int number - number of hearts to be displayed
+	*/
+	function setHealth(number) {
+		console.log('sethealth', number);
+		const health = document.getElementById("health");
+	// clear old hearts first
+	while (health.firstChild) {
+		health.removeChild(health.firstChild);
+	}
+	for(let i = 0; i < number; i++) {
+		var x = document.createElement("IMG");
+		x.setAttribute("src", "assets/images/heart.jpg");
+		x.setAttribute("width", 20);
+		x.setAttribute("height", 20);
+		health.appendChild(x);
+	}
+}
+
+/* this function directly alters the DOM and display different numbers of bullets
+	at bottom right
+	@param int number - number of bullets to be displayed
+	*/
+	function setAmmo(number) {
+
+		const ammo = document.getElementById("ammo");
+	// clear old hearts first
+	while (ammo.firstChild) {
+		ammo.removeChild(ammo.firstChild);
+	}
+	for(let i = 0; i < number; i++) {
+		var x = document.createElement("IMG");
+		x.setAttribute("src", "assets/images/ammo1.png");
+		x.setAttribute("width", 20);
+		x.setAttribute("height", 20);
+		ammo.appendChild(x);
+	}
+
 }
 
 /* function to create enemy objects */
@@ -299,28 +361,28 @@ class Enemy{
 	}
 	move(objective){
 		let objPos = objective.getWorldPosition();
-		let thisPos = this.container.getWorldPosition();
+		let thisPos = this.enemyContainer.getWorldPosition();
 		let deltaX = objPos.x - thisPos.x;
 		let deltaZ = objPos.z - thisPos.z;
 		let angle = Math.atan(deltaX/deltaZ);
 		let xSpeed = this.speed * Math.sin(angle);
 		let zSpeed = this.speed * Math.cos(angle);
 		if(thisPos.z > objPos.z ){
-			this.container.nudge(-xSpeed,0,0);
-			this.container.nudge(0,0,-zSpeed);
+			this.enemyContainer.nudge(-xSpeed,0,0);
+			this.enemyContainer.nudge(0,0,-zSpeed);
 		}
 		else{
-			this.container.nudge(xSpeed,0,0);
-			this.container.nudge(0,0,zSpeed);
+			this.enemyContainer.nudge(xSpeed,0,0);
+			this.enemyContainer.nudge(0,0,zSpeed);
 		}
 	}
 	lookAt(objective){
 		let pos = objective.getWorldPosition();
-		const cPos = this.container.getWorldPosition();
+		const cPos = this.enemyContainer.getWorldPosition();
 		// compute a rotation vector from the cone to the object to look at
 		let v = new THREE.Vector3()
 		v.subVectors(pos, cPos).add(cPos);
-		this.container.tag.object3D.lookAt( v )
+		this.enemyContainer.tag.object3D.lookAt( v )
 	}
 	// this checks the collision with bullet 
 	checkCollision(collider){
