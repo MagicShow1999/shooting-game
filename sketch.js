@@ -15,8 +15,9 @@ let cooldown = 0;
 let changeAmmo = true;
 let bullets_left = 5;
 let hearts_left = 5;
-let gameover = waveDone = false;
+let gameover = waveDone = powerUpSelected = powerUpShown = false;
 let waveNum;
+let reloadSpeed = 30;
 
 function preload(){
 	pistolSound = loadSound("assets/sounds/pistol.mp3");
@@ -104,6 +105,7 @@ function setup() {
 }
 
 function initialize() {
+	gameover = waveDone = powerUpSelected = powerUpShown = false;
 	changeAmmo = true;
 	bullets_left = 5;
 	hearts_left = 5;
@@ -200,15 +202,39 @@ function draw() {
 		}
 		if(enemies.length === 0 && hearts_left > 0){
 			waveDone = true;
-			document.getElementById("wavePassed").style.display = "block";
-			document.getElementById("waveNum").textContent = waveNum + 1;
-			waveNum ++;
-			document.getElementById("nextWaveNum").textContent = waveNum + 1;
-			createEnemies(3 + waveNum);
+			powerUps();
+			console.log(powerUpSelected);
+			if(powerUpSelected){
+				document.getElementById("wavePassed").style.display = "block";
+				document.getElementById("waveNum").textContent = waveNum + 1;
+				waveNum ++;
+				powerUpShown = false;
+				powerUpSelected = false;
+				document.getElementById("nextWaveNum").textContent = waveNum + 1;
+				createEnemies(3 + waveNum);
+			}
 		}
 	}
 }
 
+function powerUps(){
+	if(!powerUpShown){
+		powerUpShown = true;
+		textHolder = new Plane({
+			x:0, y:3, z:-5,
+			width: 5,
+			height: 1,
+			clickFunction: function(powerUp){
+				world.remove(powerUp);
+				reloadSpeed -= 10;
+				powerUpSelected = true;
+			}
+		});
+		world.add(textHolder);
+		textHolder.tag.setAttribute('text',
+		    'value: Increase Reload Speed; color: rgb(0,0,0); align: center;');
+	}
+}
 
 
 function mousePressed(){
@@ -220,7 +246,7 @@ function mousePressed(){
 			// console.log(interval);
 			// this interval is the cool down. so the player can't
 			// keep shooting if there's no bullet and they need to wait reloading
-			if (interval > 30) {
+			if (interval > reloadSpeed) {
 				bullets_left = 5;
 			}
 
