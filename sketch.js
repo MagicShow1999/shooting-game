@@ -15,7 +15,7 @@ let cooldown = 0;
 let changeAmmo = true;
 let bullets_left = 5;
 let hearts_left = 5;
-let gameover = false;
+let gameover = waveDone = false;
 let waveNum;
 
 function preload(){
@@ -96,6 +96,10 @@ function setup() {
 	world.add(centerCone);
 
 	initialize();
+
+	//I am not sure if the player can acutally press the button when they are in VR
+	//if they can we can leave this here.
+	//otherwise, remove and use the implmentation on line 236
 	document.getElementById("replay").addEventListener("click", initialize);
 }
 
@@ -114,7 +118,8 @@ function initialize() {
 	// spawn enemies
 	createEnemies(3);
 	gameover = false;
-	document.getElementById("gameover").style.display = "none";
+	setTimeout(displayNone,500,document.getElementById("gameover"));
+	//document.getElementById("gameover").style.display = "none";
 	world.teleportToObject( centerCone );
 }
 
@@ -194,6 +199,7 @@ function draw() {
 			setAmmo(bullets_left);
 		}
 		if(enemies.length === 0 && hearts_left > 0){
+			waveDone = true;
 			document.getElementById("wavePassed").style.display = "block";
 			document.getElementById("waveNum").textContent = waveNum + 1;
 			waveNum ++;
@@ -227,14 +233,20 @@ function mousePressed(){
 		}
 		//this is only relevant if in vr, the player is unable to actuall press the play again button
 		//if they are able to press it, we can remove this statement
-		if(gameover){
-			document.getElementById("replay").click();
-		}
+		/*if(gameover){
+			setTimeout(initialize, 500);
+		}*/
 		//similarly the reason why this is here.
-		document.getElementById("wavePassed").style.display = "none";
+		if(waveDone){
+			waveDone = false;
+			setTimeout(displayNone, 500,document.getElementById("wavePassed"));
+		}
 	}
 }
 
+function displayNone(ele){
+	ele.style.display = "none";
+}
 /* Get random values between min and max. Copied from mozilla */
 function getRandomArbitrary(min, max) {
 	return Math.random() * (max - min) + min;
