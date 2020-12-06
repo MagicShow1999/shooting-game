@@ -44,6 +44,7 @@
 		}
 		#gameover {
 			display: none;
+			box-sizing: border-box;
 			border-radius: 20px;
 			z-index: 100;
 			position: absolute;
@@ -52,7 +53,8 @@
 			left: 50%;
 			top: 50%;
 			transform: translate(-50%, -50%);
-			
+			flex-direction: column;
+
 		}
 		span {
 			font-size: 40px;
@@ -68,6 +70,17 @@
 			color: black;
 			cursor: pointer;
 		}
+
+		#wavePassed{
+			display: none;
+			font-size: 50px;
+			position: absolute;
+			box-sizing: border-box;
+			left: 50%;
+			top: 50%;
+			z-index: 100;
+			transform: translate(-50%, -50%);
+		}
 	</style>
 </head>
 <body>
@@ -75,6 +88,7 @@
 	<div id="health"></div>
 	<div id="ammo"></div>
 	<div id="gameover"><span>Game Over!</span><button id="replay">Play again!</button></div>
+	<div id="wavePassed">Wave <span id = "waveNum"> </span> Completed! <br> Wave <span id = "nextWaveNum"> </span> incomming! </div>
 	<!-- container to hold our VR scene - make sure to give this element an ID of 'VRScene' -->
 	<a-scene id="VRScene">
 
