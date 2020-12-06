@@ -16,7 +16,7 @@ let changeAmmo = true;
 let bullets_left = 5;
 let hearts_left = 5;
 let gameover = false;
-let waveNum = 0;
+let waveNum;
 
 function preload(){
 	pistolSound = loadSound("assets/sounds/pistol.mp3");
@@ -103,6 +103,7 @@ function initialize() {
 	changeAmmo = true;
 	bullets_left = 5;
 	hearts_left = 5;
+	waveNum = 0;
 	for(bullet of bullets){
 		world.remove(bullet.myContainer);
 	}
@@ -121,6 +122,7 @@ function draw() {
 	/*if (gameover) {
 		initialize();
 	} else {*/
+	if(!gameover){
 		// change the gun position to always locate around world camera position
 		gun.setPosition(world.camera.x,world.camera.y - 0.3,world.camera.z);
 		gun.rotateY(world.camera.rotationY + 180);
@@ -178,7 +180,7 @@ function draw() {
 					if (enemies.length !== 0) {
 						enemies.forEach(enemy => {
 							enemy.remove();
-						})
+						});
 					}
 				}
 				hearts_left -= 1;
@@ -197,9 +199,8 @@ function draw() {
 			waveNum ++;
 			document.getElementById("nextWaveNum").textContent = waveNum + 1;
 			createEnemies(3 + waveNum);
-			document.getElementById("wavePassed").style.display = none;
 		}
-	//}
+	}
 }
 
 
@@ -224,10 +225,13 @@ function mousePressed(){
 			bullets_left -= 1;
 			changeAmmo = true;
 		}
-	}
-	if(gameover){
-		console.log("ASDF):")
-		document.getElementById("replay").click();
+		//this is only relevant if in vr, the player is unable to actuall press the play again button
+		//if they are able to press it, we can remove this statement
+		if(gameover){
+			document.getElementById("replay").click();
+		}
+		//similarly the reason why this is here.
+		document.getElementById("wavePassed").style.display = "none";
 	}
 }
 
@@ -245,7 +249,7 @@ function getDistance(objPos, objTwoPos) {
 	@param int number - number of hearts to be displayed
 	*/
 function setHealth(number) {
-		console.log('sethealth', number);
+		//console.log('sethealth', number);
 		const health = document.getElementById("health");
 	// clear old hearts first
 	while (health.firstChild) {
