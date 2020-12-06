@@ -15,7 +15,9 @@ let cooldown = 0;
 let changeAmmo = true;
 let bullets_left = 5;
 let hearts_left = 5;
-let gameover = false;
+let gameover = waveDone = powerUpSelected = powerUpShown = false;
+let waveNum;
+let reloadSpeed = 30;
 
 function preload(){
 	pistolSound = loadSound("assets/sounds/pistol.mp3");
@@ -84,7 +86,7 @@ function setup() {
 			world.camera.storeRotation(rot);
 		}
 	})
-	
+
 	//box.hide();
 	//world.add(box);
 	world.add(gun);
@@ -95,27 +97,39 @@ function setup() {
 	world.add(centerCone);
 
 	initialize();
+
+	//I am not sure if the player can acutally press the button when they are in VR
+	//if they can we can leave this here.
+	//otherwise, remove and use the implmentation on line 236
 	document.getElementById("replay").addEventListener("click", initialize);
 }
 
 function initialize() {
+	gameover = waveDone = powerUpSelected = powerUpShown = false;
 	changeAmmo = true;
 	bullets_left = 5;
 	hearts_left = 5;
-
+	waveNum = 0;
+	for(bullet of bullets){
+		world.remove(bullet.myContainer);
+	}
 	bullets = [];
 	enemies = [];
 	setHealth(5);
 	setAmmo(5);
 	// spawn enemies
-	createEnemies();
+	createEnemies(3);
 	gameover = false;
-	document.getElementById("gameover").style.display = "none";
+	setTimeout(displayNone,500,document.getElementById("gameover"));
+	//document.getElementById("gameover").style.display = "none";
+	world.teleportToObject( centerCone );
 }
+
 function draw() {
-	if (gameover) {
+	/*if (gameover) {
 		initialize();
-	} else {
+	} else {*/
+	if(!gameover){
 		// change the gun position to always locate around world camera position
 		gun.setPosition(world.camera.x,world.camera.y - 0.3,world.camera.z);
 		gun.rotateY(world.camera.rotationY + 180);
@@ -126,7 +140,7 @@ function draw() {
 			const pos = bullets[i].bullet.getWorldPosition();
 			// check collision here
 			for(let j = 0; j < enemies.length; j++){
-				
+
 				if(enemies[j].checkCollision(pos)){
 					const enemy_hp = enemies[j].hp;
 					if (enemy_hp == 1) {
@@ -166,13 +180,14 @@ function draw() {
 				// if player has no HP, display game over screen
 				if (hearts_left === 1) {
 					// show game over screen in the middle and play game over sound
-					document.getElementById("gameover").style.display= "block";
+					document.getElementById("gameover").style.display= "flex";
 					gameoverSound.play();
+					gameover = true;
 					// clear enemies
 					if (enemies.length !== 0) {
 						enemies.forEach(enemy => {
 							enemy.remove();
-						})
+						});
 					}
 				}
 				hearts_left -= 1;
@@ -185,9 +200,41 @@ function draw() {
 			changeAmmo = false;
 			setAmmo(bullets_left);
 		}
+		if(enemies.length === 0 && hearts_left > 0){
+			waveDone = true;
+			powerUps();
+			console.log(powerUpSelected);
+			if(powerUpSelected){
+				document.getElementById("wavePassed").style.display = "block";
+				document.getElementById("waveNum").textContent = waveNum + 1;
+				waveNum ++;
+				powerUpShown = false;
+				powerUpSelected = false;
+				document.getElementById("nextWaveNum").textContent = waveNum + 1;
+				createEnemies(3 + waveNum);
+			}
+		}
 	}
 }
 
+function powerUps(){
+	if(!powerUpShown){
+		powerUpShown = true;
+		textHolder = new Plane({
+			x:0, y:3, z:-5,
+			width: 5,
+			height: 1,
+			clickFunction: function(powerUp){
+				world.remove(powerUp);
+				reloadSpeed -= 10;
+				powerUpSelected = true;
+			}
+		});
+		world.add(textHolder);
+		textHolder.tag.setAttribute('text',
+		    'value: Increase Reload Speed; color: rgb(0,0,0); align: center;');
+	}
+}
 
 
 function mousePressed(){
@@ -199,21 +246,33 @@ function mousePressed(){
 			// console.log(interval);
 			// this interval is the cool down. so the player can't
 			// keep shooting if there's no bullet and they need to wait reloading
-			if (interval > 40) {
+			if (interval > reloadSpeed) {
 				bullets_left = 5;
 			}
-			
+
 		} else {
-			
+
 			pistolSound.play();
 			bullets.push(new Bullet());
 			bullets_left -= 1;
 			changeAmmo = true;
 		}
-		
+		//this is only relevant if in vr, the player is unable to actuall press the play again button
+		//if they are able to press it, we can remove this statement
+		/*if(gameover){
+			setTimeout(initialize, 500);
+		}*/
+		//similarly the reason why this is here.
+		if(waveDone){
+			waveDone = false;
+			setTimeout(displayNone, 500,document.getElementById("wavePassed"));
+		}
 	}
 }
 
+function displayNone(ele){
+	ele.style.display = "none";
+}
 /* Get random values between min and max. Copied from mozilla */
 function getRandomArbitrary(min, max) {
 	return Math.random() * (max - min) + min;
@@ -227,8 +286,8 @@ function getDistance(objPos, objTwoPos) {
 	at bottom left
 	@param int number - number of hearts to be displayed
 	*/
-	function setHealth(number) {
-		console.log('sethealth', number);
+function setHealth(number) {
+		//console.log('sethealth', number);
 		const health = document.getElementById("health");
 	// clear old hearts first
 	while (health.firstChild) {
@@ -247,9 +306,9 @@ function getDistance(objPos, objTwoPos) {
 	at bottom right
 	@param int number - number of bullets to be displayed
 	*/
-	function setAmmo(number) {
+function setAmmo(number) {
 
-		const ammo = document.getElementById("ammo");
+	const ammo = document.getElementById("ammo");
 	// clear old hearts first
 	while (ammo.firstChild) {
 		ammo.removeChild(ammo.firstChild);
@@ -265,21 +324,20 @@ function getDistance(objPos, objTwoPos) {
 }
 
 /* function to create enemy objects */
-function createEnemies(){
+function createEnemies(num){
 	// currently i just choose Box as default placeholder for enemy object
 	// spawn starwar enemies
-	for(let i = 0; i < 3; i ++){
-		const pos = { x:random(-5,5), y:0.8, z:random(-15,5)};
+	for(let i = 0; i < num; i ++){
+		const pos = { x:random(-5,5), y:0.8, z:random(-15,0)};
 		const enemy = new Enemy("starwar", 0.01, 6, 0.02, pos, 45);
 		enemies.push(enemy);
 	}
 	// spawn green monsters
-	for(let i = 0; i < 3; i ++){
-		const pos = { x:random(-5,5), y:0.5, z:random(-15,5)};
+	for(let i = 0; i < num; i ++){
+		const pos = { x:random(-5,5), y:0.5, z:random(-15,0)};
 		const enemy = new Enemy("green_monster", 1, 3, 0.03, pos, -60);
 		enemies.push(enemy);
 	}
-
 
 }
 
@@ -354,7 +412,7 @@ class Enemy{
 			width: 1,
 			height: 0.1,
 			red:random(255), green:0, blue: 0,
-		}) 
+		})
 
 		this.enemyContainer.add(this.healthbar);
 		this.enemyContainer.addChild(this.obj);
@@ -384,7 +442,7 @@ class Enemy{
 		v.subVectors(pos, cPos).add(cPos);
 		this.enemyContainer.tag.object3D.lookAt( v )
 	}
-	// this checks the collision with bullet 
+	// this checks the collision with bullet
 	checkCollision(collider){
 		if(getDistance(this.enemyContainer, collider) < 0.55) {
 			return true;
@@ -397,7 +455,7 @@ class Enemy{
 		// console.log(getDistance(pos, collider));
 		if(getDistance(pos, player) <= 1) {
 			return true;
-		} 
+		}
 		return false;
 	}
 	reduceHp() {
@@ -408,4 +466,3 @@ class Enemy{
 		world.remove(this.enemyContainer);
 	}
 }
-
