@@ -2,7 +2,7 @@
 let world,gun,box;
 let bullets = [];
 let enemies = [];
-const types = [Box,Sphere,Dodecahedron,Octahedron,Tetrahedron,TorusKnot,Torus];
+let powerUpList = [];
 
 // import assets here
 let pistolSound, leftArrow, rightArrow;
@@ -203,8 +203,10 @@ function draw() {
 		if(enemies.length === 0 && hearts_left > 0){
 			waveDone = true;
 			powerUps();
-			console.log(powerUpSelected);
 			if(powerUpSelected){
+				powerUpList.forEach((p)=>{
+					world.remove(p);
+				});
 				document.getElementById("wavePassed").style.display = "block";
 				document.getElementById("waveNum").textContent = waveNum + 1;
 				waveNum ++;
@@ -220,19 +222,33 @@ function draw() {
 function powerUps(){
 	if(!powerUpShown){
 		powerUpShown = true;
-		textHolder = new Plane({
+		reloadSpeed = new Plane({
 			x:0, y:3, z:-5,
 			width: 5,
 			height: 1,
 			clickFunction: function(powerUp){
-				world.remove(powerUp);
 				reloadSpeed -= 10;
 				powerUpSelected = true;
 			}
 		});
-		world.add(textHolder);
-		textHolder.tag.setAttribute('text',
+		world.add(reloadSpeed);
+		powerUpList.push(reloadSpeed);
+		reloadSpeed.tag.setAttribute('text',
 		    'value: Increase Reload Speed; color: rgb(0,0,0); align: center;');
+
+		increaseHealth = new Plane({
+			x:0, y:1.5, z:-5,
+			width: 5,
+			height: 1,
+			clickFunction: function(powerUp){
+				setHealth(hearts_left + 3);
+				powerUpSelected = true;
+			}
+		});
+		world.add(increaseHealth);
+		powerUpList.push(increaseHealth);
+		increaseHealth.tag.setAttribute('text',
+		    'value: Gain 3 Health; color: rgb(0,0,0); align: center;');
 	}
 }
 
