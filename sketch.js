@@ -203,9 +203,11 @@ function draw() {
 			waveDone = true;
 			powerUps();
 			if(powerUpSelected){
-				powerUpList.forEach((p)=>{
-					world.remove(p);
-				});
+				for(let i = 0; i < powerUpList.length; i++){
+					world.remove(powerUpList[i]);
+					powerUpList.splice(i,1);
+					i--;
+				}
 				document.getElementById("wavePassed").style.display = "block";
 				document.getElementById("waveNum").textContent = waveNum + 1;
 				waveNum ++;
@@ -221,7 +223,7 @@ function draw() {
 function powerUps(){
 	if(!powerUpShown){
 		powerUpShown = true;
-		reloadSpeed = new Plane({
+		reloadSpeedIncrease = new Plane({
 			x:0, y:3, z:-5,
 			width: 5,
 			height: 1,
@@ -230,9 +232,9 @@ function powerUps(){
 				powerUpSelected = true;
 			}
 		});
-		world.add(reloadSpeed);
-		powerUpList.push(reloadSpeed);
-		reloadSpeed.tag.setAttribute('text',
+		world.add(reloadSpeedIncrease);
+		powerUpList.push(reloadSpeedIncrease);
+		reloadSpeedIncrease.tag.setAttribute('text',
 		    'value: Increase Reload Speed; color: rgb(0,0,0); align: center;');
 
 		increaseHealth = new Plane({
@@ -261,7 +263,8 @@ function keyPressed(){
 
 			const interval = frameCount - cooldown;
 			cooldown = frameCount;
-			if (bullets_left === 0) {
+			if (
+			bullets_left === 0) {
 				// console.log(interval);
 				// this interval is the cool down. so the player can't
 				// keep shooting if there's no bullet and they need to wait reloading
