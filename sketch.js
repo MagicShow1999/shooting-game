@@ -97,7 +97,6 @@ function setup() {
 	world.add(centerCone);
 
 	initialize();
-
 	//I am not sure if the player can acutally press the button when they are in VR
 	//if they can we can leave this here.
 	//otherwise, remove and use the implmentation on line 236
@@ -237,35 +236,40 @@ function powerUps(){
 }
 
 
-function mousePressed(){
-	if (cooldown < frameCount && bullets_left >= 0) {
-		// console.log(frameCount);
-		const interval = frameCount - cooldown;
-		cooldown = frameCount;
-		if (bullets_left === 0) {
-			// console.log(interval);
-			// this interval is the cool down. so the player can't
-			// keep shooting if there's no bullet and they need to wait reloading
-			if (interval > reloadSpeed) {
-				bullets_left = 5;
+function keyPressed(){
+	if (keyCode == 32) {
+
+
+		if (cooldown < frameCount && bullets_left >= 0) {
+			// console.log(frameCount);
+
+			const interval = frameCount - cooldown;
+			cooldown = frameCount;
+			if (bullets_left === 0) {
+				// console.log(interval);
+				// this interval is the cool down. so the player can't
+				// keep shooting if there's no bullet and they need to wait reloading
+				if (interval > reloadSpeed) {
+					bullets_left = 5;
+				}
+
+			} else {
+
+				pistolSound.play();
+				bullets.push(new Bullet());
+				bullets_left -= 1;
+				changeAmmo = true;
 			}
-
-		} else {
-
-			pistolSound.play();
-			bullets.push(new Bullet());
-			bullets_left -= 1;
-			changeAmmo = true;
-		}
-		//this is only relevant if in vr, the player is unable to actuall press the play again button
-		//if they are able to press it, we can remove this statement
-		/*if(gameover){
-			setTimeout(initialize, 500);
-		}*/
-		//similarly the reason why this is here.
-		if(waveDone){
-			waveDone = false;
-			setTimeout(displayNone, 500,document.getElementById("wavePassed"));
+			//this is only relevant if in vr, the player is unable to actuall press the play again button
+			//if they are able to press it, we can remove this statement
+			/*if(gameover){
+				setTimeout(initialize, 500);
+			}*/
+			//similarly the reason why this is here.
+			if(waveDone){
+				waveDone = false;
+				setTimeout(displayNone, 500,document.getElementById("wavePassed"));
+			}
 		}
 	}
 }
