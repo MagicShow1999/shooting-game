@@ -3,6 +3,7 @@ let world,gun,box;
 let bullets = [];
 let enemies = [];
 let powerUpList = [];
+let reloadSpeedIncrease, increaseHealth;
 
 // import assets here
 let pistolSound, leftArrow, rightArrow;
@@ -59,9 +60,6 @@ function setup() {
 		red:0, green:0, blue:0,
 		clickFunction: function(theBox) {
 			world.teleportToObject( theBox );
-			//TODO: trying to set the rotation of the user after teleport but it's not going well
-			rot = THREE.Vector3(0,180,0)
-			world.camera.storeRotation(rot);
 		}
 	});
 	rightCone = new Cone({
@@ -71,8 +69,12 @@ function setup() {
 		red:0, green:0, blue:0,
 		clickFunction: function(theBox ) {
 			world.teleportToObject( theBox );
-			rot = THREE.Vector3(0,180,0)
-			world.camera.storeRotation(rot);
+			/*
+			const v = new THREE.Vector3(0,0,0);
+			world.camera.holder.getAttribute("look-controls").enabled=false
+			world.camera.holder.object3D.lookAt(v);
+			world.camera.holder.getAttribute("look-controls").enabled=true
+			*/
 		}
 	});
 	leftCone = new Cone({
@@ -82,8 +84,6 @@ function setup() {
 		red:0, green:0, blue:0,
 		clickFunction: function(theBox) {
 			world.teleportToObject( theBox );
-			rot = THREE.Vector3(0,180,0)
-			world.camera.storeRotation(rot);
 		}
 	})
 
@@ -96,7 +96,9 @@ function setup() {
 	world.add(leftCone);
 	world.add(centerCone);
 
-	initialize();
+	//initialize();
+	gameover = true;
+	document.getElementById("gameover").style.display= "flex";
 	//I am not sure if the player can acutally press the button when they are in VR
 	//if they can we can leave this here.
 	//otherwise, remove and use the implmentation on line 236
@@ -118,7 +120,6 @@ function initialize() {
 	setAmmo(5);
 	// spawn enemies
 	createEnemies(3);
-	gameover = false;
 	setTimeout(displayNone,500,document.getElementById("gameover"));
 	//document.getElementById("gameover").style.display = "none";
 	world.teleportToObject( centerCone );
@@ -160,13 +161,14 @@ function draw() {
 			const playerPos = world.getUserPosition();
 			// remove the bullets if they are far away from player.
 			if (getDistance(pos, playerPos) > 10 && bullets.length !== 0) {
+				console.log(i);
 				world.remove(bullets[i].myContainer);
 				bullets.splice(i, 1);
 				i--;
 				continue;
 			}
 		}
-
+		console.log(enemies.length);
 		for(let i = 0; i < enemies.length; i++){
 			enemies[i].move(gun);
 			enemies[i].lookAt(gun);
@@ -204,7 +206,7 @@ function draw() {
 			powerUps();
 			if(powerUpSelected){
 				for(let i = 0; i < powerUpList.length; i++){
-					world.remove(powerUpList[i]);
+					world.remove(powerUpList[i].container);
 					powerUpList.splice(i,1);
 					i--;
 				}
@@ -223,7 +225,11 @@ function draw() {
 function powerUps(){
 	if(!powerUpShown){
 		powerUpShown = true;
-		reloadSpeedIncrease = new Plane({
+		reloadSpeedIncrease = new PowerUp(0,3,-7,5,1,()=>{
+			reloadSpeed -= 10;
+			powerUpSelected = true;
+		});
+		/*reloadSpeedIncrease = new Plane({
 			x:0, y:3, z:-5,
 			width: 5,
 			height: 1,
@@ -231,13 +237,17 @@ function powerUps(){
 				reloadSpeed -= 10;
 				powerUpSelected = true;
 			}
-		});
-		world.add(reloadSpeedIncrease);
+		});*/
+		//world.add(reloadSpeedIncrease.plane);
 		powerUpList.push(reloadSpeedIncrease);
-		reloadSpeedIncrease.tag.setAttribute('text',
+		reloadSpeedIncrease.plane.tag.setAttribute('text',
 		    'value: Increase Reload Speed; color: rgb(0,0,0); align: center;');
 
-		increaseHealth = new Plane({
+		increaseHealth = new PowerUp(0,1.5,-7,5,1,()=>{
+			setHealth(hearts_left + 3);
+			powerUpSelected = true;
+		});
+		/*increaseHealth = new Plane({
 			x:0, y:1.5, z:-5,
 			width: 5,
 			height: 1,
@@ -245,11 +255,15 @@ function powerUps(){
 				setHealth(hearts_left + 3);
 				powerUpSelected = true;
 			}
-		});
-		world.add(increaseHealth);
+		});*/
+		//world.add(increaseHealth.plane);
 		powerUpList.push(increaseHealth);
-		increaseHealth.tag.setAttribute('text',
+		increaseHealth.plane.tag.setAttribute('text',
 		    'value: Gain 3 Health; color: rgb(0,0,0); align: center;');
+	}
+	else{
+		increaseHealth.lookAt(gun);
+		reloadSpeedIncrease.lookAt(gun);
 	}
 }
 
@@ -323,6 +337,7 @@ function setHealth(number) {
 		x.setAttribute("height", 20);
 		health.appendChild(x);
 	}
+	hearts_left = number;
 }
 
 /* this function directly alters the DOM and display different numbers of bullets
@@ -411,7 +426,6 @@ class Enemy{
 			rotationX:0,
 			rotationY:0,
 			rotationZ:0,
-			red:255, green:255, blue:255,
 		});
 		world.add(this.enemyContainer);
 		this.obj = new OBJ({
@@ -487,5 +501,34 @@ class Enemy{
 	}
 	remove(){
 		world.remove(this.enemyContainer);
+	}
+}
+
+// powerup class
+class PowerUp{
+	constructor(x,y,z,width,height,func){
+		this.container = new Container3D({
+			x: x, y: y, z: z,
+			rotationX:0,
+			rotationY:0,
+			rotationZ:0,
+		});
+		this.plane = new Plane({
+			x:0, y:0, z:0,
+			width: width,
+			height: height,
+			clickFunction: func
+		});
+		this.container.addChild(this.plane);
+		world.add(this.container);
+	}
+	lookAt(obj){
+		let pos = obj.tag.object3D.position
+		const cPos = this.container.tag.object3D.position
+		// compute a rotation vector from the cone to the object to look at
+		let v = new THREE.Vector3()
+		v.subVectors(pos, cPos).add(cPos);
+		v.y = cPos.y;
+		this.container.tag.object3D.lookAt( v )
 	}
 }
